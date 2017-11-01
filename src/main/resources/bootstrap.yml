@@ -1,0 +1,93 @@
+spring:
+  application:
+    name: approve-zuul #对应前配置文件中的{application}部分
+  cloud:
+    config: 
+      username: shichangjian #连接config-service的用户名
+      password: 123 #连接config-service的密码
+   #   uri: "http://localhost:7001/" 当引用serviceid时，就代替了此url
+      profile: dev
+      label: master
+      discovery:
+        enabled: true #参数设置为true，开启通过服务来访问Config Server的功能
+        serviceId: approve-config #参数来指定Config Server注册的服务名
+      #其实访问地址是:uri/application/dev/master 
+server:
+  port: 5555
+hystrix:
+  command:
+    default:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 10000 #断路器的超时时间需要大于Ribbon的超时时间，不然不会触发重试，此处配置是为了API网关中路由转发请求的HystrixCommand执行超时时间，当转发请求命令执行时间超过该配置值之后，hystrix会将该命令标记为TIMEOUT并抛出异常，zuul会对该异常进行处理并返回TIMEOUt
+ribbon:
+  ConnectTimeout: 10000 #路由请求连接超时，要小于路由请求转发的 hystrix
+  ReadTimeout: 20000
+zuul:
+  host:
+    maxTotalConnections: 200 #适用于ApacheHttpClient，如果是okhttp无效。每个服务的http客户端连接池最大连接，默认是200.
+    maxPerRouteConnections: 20 #适用于ApacheHttpClient，如果是okhttp无效。每个route可用的最大连接数，默认值是20
+    socket-timeout-millis: 80000 #读写时间，毫秒
+    connect-timeout-millis: 80000 #连接时间，毫秒
+  filter:
+    root: com/cloud/approve_zuul/filter #指定动态加载的过滤器存储路径
+    interval: 5 #用来配置动态加载的间隔时间，单位秒
+management:
+  port: 1115   #actuator暴露接口使用的端口，为了和api接口使用的端口进行分离
+  context-path: /admin   #actuator暴露接口的前缀
+  security:
+    enabled: true #actuator是否需要安全保证，管理端点暴露，此配置限制了及时动态刷新，待解决？？？？？
+security:
+  basic:
+    enabled: true #指定接口需要验证
+    path: /admin #针对/admin路径进行认证
+  user:
+    name: shichangjian #为此服务添加访问权限
+    password: 123 
+#zuul路由规则已提取到git仓库
+
+#传统路由
+#zuul:
+#  routes:
+#    api-a-url2: 
+#      path: /schedule2/** #特别注意：这个例子是 多实例配置，没有和eureka整合的传统路由zuul配置 ，多实例配置，url实例并没有整合类似eureka之类的服务治理框架，所以要设置ribbon.eureka.enabled=false，否则配置的serviceId获取不到对应的实例清单，url的负载路由是用手工维护服务和实例的对应关系。
+#      serviceId: schedule5 
+#    api-a-url3: 
+#      path: /schedule3/** #特别注意：这个例子是单实例配置 ，没有和eureka整合的传统路由zuul配置 ，单实例配置
+#      url: http://localhost:9004/ #也就是说当我们访问http://localhost:5555/api-a-url/add?a=1&b=2的时候，Zuul会将该请求路由到：http://localhost:2222/add?a=1&b=2
+#ribbon.eureka.enabled=false #第一个例子schedule5服务，传统路由要加上此配置
+#schedule5.ribbon.listOfServers=http://localhost:9004/,http://localhost:9005/
+
+
+
+
+
+#zuul:
+#注意：此配置表示zuul将使用此表达式，对所有服务不自动创建路由规则，会根据“routes中” 自己配的路由规则执行，如不陪此表达式，zuul将使用默认匹配规则，根据服务名作为外部请求的前缀自动匹配路由，就是说，在浏览器输入路由的前缀名和服务名一样时会自动匹配此路由进入此服务，产生安全隐患。
+#  ignored-services: "*"
+# TODO: 去掉每个端口中admin的访问
+#  sensitive-headers:	#默认设置sensitiveHeaders: Cookie,Set-Cookie,Authorization，无需设置除非你需要不同的配置.敏感headers也支持全局设置 zuul.sensitiveHeaders. 如果在单个路由中设置 sensitiveHeaders 会覆盖全局 sensitiveHeaders 设置.
+#  routes:
+#    approve-zuul: #随意取名
+#      path: /approve1111/** #approve1111随意取名
+#      serviceId: approve #项目服务名,这个例子是与eureka整合的 服务 配置,注意：不能使用url，否则不能负载均衡,没有线程隔离，没有断路器的保护，使用serviceId的映射方式，除了对Zuul维护上更加友好之外，serviceId映射方式还支持了断路器，对于服务故障的情况下，可以有效的防止故障蔓延到服务网关上而影响整个系统的对外服务
+#      strip-prefix: false	#在转发之前标记是否从路径中删除前缀。X-Forwarder-Host请求头默认添加到转发请求中。设置zuul.addProxyHeaders=false禁用它。路径前缀默认被删除， 到后台服务的请求会添加一个 “X-Forwarded-Prefix”(“/v*/**”在上面的例子中)。
+#    ribbon-zuul:
+#      path: /ribbon2222333/**
+#      serviceId: client-ribbon
+
+
+
+#此配置还没成功
+#另外，配置，在系统建设一开始实现了user-service服务，看第二个配置如下：第二个路由规则是一开始的时候的服务，第一个是后来拆分的服务，请求此/ribbon2222333/ext/**规则会匹配这两个路由规则
+#zuul:
+#  routes:
+#随着版本的迭代，我们对ribbon-zuul服务做了一些功能拆分，将原本属于ribbon-zuul服务的某些功能拆分到了一个全新的服务ribbon-zuul-ext中，而拆分的外部调用url路径符合规则/ribbon2222333/ext/**,这时需要在下面增加一个一个路由规则，
+#路由的规则：/ribbon-zuul/?:匹配/ribbon-zuul/之后拼接一个任意字符的路径，如/ribbon-zuul/a。/ribbon-zuul/*:匹配任意字符的路径，如/ribbon-zuul/aaaaa。/ribbon-zuul/**:匹配包含/ribbon-zuul/*之外还可以匹配/ribbon-zuul/a/b的多级目录路径
+#    ribbon-zuul-ext:
+#      path: /ribbon2222333/ext/**
+#      serviceId: client-ribbon-ext #此服务的url路径实际上同时被ribbon-zuul:和ribbon-zuul-ext:两个表达式匹配，注意：这种配置有先后顺序，路由规则匹配请求路径的时候是通过线性遍历的方式，从上向下加载，加载第一个路由规则后就返回并结束匹配过程
+#    ribbon-zuul:
+#      path: /ribbon2222333/**
+#      serviceId: client-ribbon

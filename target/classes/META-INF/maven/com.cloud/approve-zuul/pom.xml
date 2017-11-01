@@ -2,65 +2,77 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>com.cloud</groupId>
 	<artifactId>approve-zuul</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>approve-zuul</name>
 	<url>http://maven.apache.org</url>
+	<parent>
+		<groupId>com.cloud</groupId>
+		<artifactId>approve-parent</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+	</parent>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<java.version>1.8</java.version>
 	</properties>
-	<!-- 下载插件构件 -->
-	<distributionManagement>
-		<repository><!-- 发布版本构件的仓库 -->
-			<id>nexus-releases</id><!-- 私服中发布版本构件的宿主仓库id -->
-			<name>Nexus Releases Repository</name><!-- 发布版本构件的宿主仓库名 -->
-			<url>http://192.168.190.3:8081/nexus/content/repositories/releases</url><!-- 
-				私服中发布版本构件的宿主仓库url -->
-		</repository>
-		<snapshotRepository><!-- 私服中快件版本的宿主仓库 -->
-			<id>nexus-snapshots</id><!-- 私服中快件版本的宿主仓库 id -->
-			<name>Nexus Snapshot Repository</name><!-- 私服中快件版本的宿主仓库名称 -->
-			<url>http://192.168.190.3:8081/nexus/comtent/repositories/snapshots</url><!-- 
-				私服中快件版本的宿主仓库 url -->
-		</snapshotRepository>
-	</distributionManagement>
+	
 	<dependencies>
 		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>org.springframework.cloud</groupId>
-			<artifactId>spring-cloud-starter-zuul</artifactId>
+			<artifactId>spring-cloud-starter-config</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-eureka</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+		
+<!-- 		zuul依赖 -->
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-zuul</artifactId>
+		</dependency>
+<!-- 		实现请求过滤器的动态加载，借助基于jvm的动态语言的帮助 -->
+		<dependency>
+			<groupId>org.codehaus.groovy</groupId>
+			<artifactId>groovy-all</artifactId>
+		</dependency>
+		
+<!-- 		bus及时动态刷新，springboot端点监控  -->
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-bus-amqp</artifactId>
+		</dependency>
+	
+	<!-- 	zipkin监控 cloud的DSR1此jar包要指定一个最新高版本-->
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-sleuth-zipkin-stream</artifactId>
+			<version>1.2.2.RELEASE</version>
+		</dependency>
+<!-- 	绑定rabbitMQ -->
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-stream-rabbit</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-sleuth</artifactId>
+			<version>1.2.2.RELEASE</version>
+		</dependency>
+		<dependency>
+			<groupId>net.logstash.logback</groupId>
+			<artifactId>logstash-logback-encoder</artifactId>
+			<version>4.6</version>
+		</dependency>
 	</dependencies>
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>org.springframework.cloud</groupId>
-				<artifactId>spring-cloud-dependencies</artifactId>
-				<version>Brixton.RELEASE</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
-	<!-- 指定maven和jdk版本，防止每次maven update jkd改变 -->
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.3</version>
-				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
 </project>

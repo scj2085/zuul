@@ -1,0 +1,33 @@
+
+zuul:
+  retryable: false #全局配置用来关闭重试机制
+  routes:
+    ribbon-zuul5:
+      path: /ribbon2222333/**
+      serviceId: client-ribbon
+      retryable: false #指定路由关闭重试机制
+#  ErrorExtFilter:
+#    error:
+#      disable: true #禁用此默认的过滤器，使用自己的
+
+#zuul:
+#  max:
+#    host:
+#      connections: 500 #此配置已经被代替
+#  prefix: /api #为路由规则添加前缀信息，全局配置，特别注意：当路由规则以/api前缀开头的时候，将会产生错误的映射关系，此配置不能用，待解决
+#  stripPrefix: false #来关闭移除代理前缀的的动作，对于代理前缀默认是会从路劲中移除  全局配置
+#这个参数本来直接可以通过Hystrix的命名规则来设置，但被zuul重新设计了，使得在zuul中semaphores的最大并发请求有4个方法的参数可以设置，如果4个参数都存在优先级（1~4）由高到低：
+#[优先级1]zuul.eureka.api.semaphore.maxSemaphores
+#[优先级2]zuul.semaphore.max-semaphores
+#[优先级3]hystrix.command.api.execution.isolation.semaphore.maxConcurrentRequests
+#[优先级4]hystrix.command.default.execution.isolation.semaphore.maxConcurrentRequests
+#需要注意的是：在Camden.SR3版本的zuul中hystrix.command.default.execution.isolation.semaphore.maxConcurrentRequests设置不会起作用，这是因为在org.springframework.cloud.netflix.zuul.filters.ZuulProperties.HystrixSemaphore.maxSemaphores=100设置了默认值100，因此zuul.semaphore.max-semaphores的优先级高于hystrix.command.default.execution.isolation.semaphore.maxConcurrentRequests。
+#zuul.eureka.[commandKey].semaphore.maxSemaphores：
+#其中commandKey为[service id]
+#  semaphore: 
+#    max-semaphores: 128 #Hystrix最大的并发请求execution.isolation.semaphore.maxConcurrentRequests，这个值并非TPS、QPS、RPS等都是相对值，指的是1秒时间窗口内的事务/查询/请求，semaphore.maxConcurrentRequests是一个绝对值，无时间窗口，相当于亚毫秒级的。当请求达到或超过该设置值后，其其余就会被拒绝。默认值是100。
+# 建议使用这种方式来设置，可以给每个不同的后端微服务设置不同的信号量
+#  eureka:
+#    [service id]:
+#      semaphore:
+#        maxSemaphores: 128
